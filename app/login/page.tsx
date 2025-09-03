@@ -29,7 +29,7 @@ const Login = () => {
     // ✅ ถ้า login สำเร็จ ให้ redirect ไปหน้า dashboard
     router.push('/dashboard');
 
-    alert('Login success! Redirecting to dashboard...');
+    // alert('Login success! Redirecting to dashboard...');
   };
 
   return (
