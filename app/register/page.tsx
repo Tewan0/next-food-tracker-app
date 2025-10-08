@@ -53,7 +53,7 @@ const Register = () => {
       // 1. Upload profile image if it exists
       if (formData.profileImage) {
         const file = formData.profileImage;
-        const filePath = `public/${Date.now()}_${file.name}`;
+        const filePath = `profiles/${Date.now()}_${file.name}`;
         const { error: uploadError } = await supabase.storage
           .from("avatars")
           .upload(filePath, file);
@@ -88,7 +88,7 @@ const Register = () => {
 
       // 4. Show success message
       setSuccessMessage(
-        "Registration successful! Please check your email to confirm your account."
+        "Registration successful!"
       );
 
       // Optionally, redirect after a delay
