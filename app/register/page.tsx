@@ -3,8 +3,11 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, ChangeEvent } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "../lib/supabaseClient";
 
 const Register = () => {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -13,6 +16,9 @@ const Register = () => {
     profileImage: null as File | null,
   });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const handleInputChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -35,11 +41,69 @@ const Register = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Logic for form submission (e.g., API call to register user)
-    console.log("Form data submitted:", formData);
-    alert("Registration form submitted! Check the console for data.");
+    setLoading(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    try {
+      let avatarUrl = null;
+
+      // 1. Upload profile image if it exists
+      if (formData.profileImage) {
+        const file = formData.profileImage;
+        const filePath = `public/${Date.now()}_${file.name}`;
+        const { error: uploadError } = await supabase.storage
+          .from("avatars")
+          .upload(filePath, file);
+
+        if (uploadError) {
+          throw uploadError;
+        }
+
+        // 2. Get public URL for the uploaded image
+        const { data: urlData } = supabase.storage
+          .from("avatars")
+          .getPublicUrl(filePath);
+        avatarUrl = urlData.publicUrl;
+      }
+
+      // 3. Sign up the user
+      const { error: signUpError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            full_name: formData.fullName,
+            gender: formData.gender,
+            avatar_url: avatarUrl,
+          },
+        },
+      });
+
+      if (signUpError) {
+        throw signUpError;
+      }
+
+      // 4. Show success message
+      setSuccessMessage(
+        "Registration successful! Please check your email to confirm your account."
+      );
+
+      // Optionally, redirect after a delay
+      setTimeout(() => {
+        router.push("/login");
+      }, 5000);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("An unexpected error occurred.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -57,6 +121,16 @@ const Register = () => {
           <h2 className="mb-6 text-center text-3xl font-bold md:text-4xl">
             Register
           </h2>
+          {successMessage && (
+            <div className="mb-4 rounded-lg bg-green-500/30 p-4 text-center text-white">
+              {successMessage}
+            </div>
+          )}
+          {error && (
+            <div className="mb-4 rounded-lg bg-red-500/30 p-4 text-center text-white">
+              {error}
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Full Name */}
             <div>
@@ -149,9 +223,9 @@ const Register = () => {
               )}
               <label
                 htmlFor="profileImage"
-                className="cursor-pointer rounded-full bg-white px-6 py-3 font-semibold text-purple-600 shadow-md transition duration-300 hover:bg-gray-100"
+                className="w-full cursor-pointer rounded-lg bg-white/30 px-4 py-2 text-center text-white transition duration-200 hover:bg-white/40"
               >
-                Choose Photo
+                Select Image
               </label>
               <input
                 type="file"
@@ -166,9 +240,10 @@ const Register = () => {
             {/* Register Button */}
             <button
               type="submit"
-              className="w-full rounded-full bg-white py-3 font-bold text-purple-600 shadow-lg transition duration-300 hover:bg-gray-100 hover:shadow-xl"
+              className="w-full rounded-full bg-white py-3 font-bold text-purple-600 shadow-lg transition duration-300 hover:bg-gray-100 hover:shadow-xl disabled:cursor-not-allowed disabled:bg-gray-400 cursor-pointer"
+              disabled={loading}
             >
-              Register
+              {loading ? "Registering..." : "Register"}
             </button>
           </form>
 

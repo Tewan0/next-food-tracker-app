@@ -2,15 +2,17 @@
 
 import Link from 'next/link';
 import { useState, ChangeEvent } from 'react';
-import { useRouter } from 'next/navigation'; // ✅ ใช้ useRouter แทน Router เก่า
+import { useRouter } from 'next/navigation';
+import { supabase } from '../lib/supabaseClient';
 
 const Login = () => {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
-
-  const router = useRouter(); // ✅ สร้าง instance ของ router
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -20,16 +22,23 @@ const Login = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
+    setError(null);
 
-    // TODO: logic ตรวจสอบ login ที่นี่ เช่น API call ไป backend
-    console.log('Login data submitted:', formData);
+    const { error } = await supabase.auth.signInWithPassword({
+      email: formData.email,
+      password: formData.password,
+    });
 
-    // ✅ ถ้า login สำเร็จ ให้ redirect ไปหน้า dashboard
-    router.push('/dashboard');
+    setLoading(false);
 
-    
+    if (error) {
+      setError(error.message);
+    } else {
+      router.push('/dashboard');
+    }
   };
 
   return (
@@ -80,12 +89,15 @@ const Login = () => {
               />
             </div>
 
+            {error && <p className="text-center text-sm text-red-400">{error}</p>}
+
             {/* Login Button */}
             <button
               type="submit"
-              className="w-full rounded-full bg-white py-3 font-bold text-purple-600 shadow-lg transition duration-300 hover:bg-gray-100 hover:shadow-xl"
+              className="w-full rounded-full bg-white py-3 font-bold text-purple-600 shadow-lg transition duration-300 hover:bg-gray-100 hover:shadow-xl cursor-pointer"
+              disabled={loading}
             >
-              Login
+              {loading ? 'Logging in...' : 'Login'}
             </button>
           </form>
 
