@@ -166,6 +166,17 @@ const Profile = () => {
     );
   }
 
+  const handleLogout = async () => {
+  const { error } = await supabase.auth.signOut();
+  if (error) {
+    console.error('Error logging out:', error.message);
+    setFeedback({ type: 'error', message: `Error logging out: ${error.message}` });
+  } else {
+    // เมื่อ Logout สำเร็จ ให้เด้งกลับไปหน้าแรก
+    router.push('/');
+  }
+};
+
   return (
     // The rest of your JSX code for the form goes here, no changes needed for the UI
     // Just copy-paste the return statement from your existing file
@@ -212,9 +223,16 @@ const Profile = () => {
                 <option value="other" className="bg-purple-500">Other</option>
               </select>
             </div>
-            <button type="submit" className="w-full rounded-full bg-white py-3 font-bold text-purple-600 shadow-lg transition duration-300 hover:bg-gray-100 disabled:cursor-not-allowed disabled:bg-gray-400" disabled={isSaving}>
+            <button type="submit" className="w-full rounded-full bg-white py-3 font-bold text-purple-600 shadow-lg transition duration-300 hover:bg-gray-100 disabled:cursor-not-allowed disabled:bg-gray-400 cursor-pointer" disabled={isSaving}>
               {isSaving ? 'Saving...' : 'Save Changes'}
             </button>
+            <button
+            type="button"
+            onClick={handleLogout}
+            className="mt-4 w-full rounded-full border-2 border-white/50 py-3 font-bold text-white transition duration-300 hover:border-red-500 hover:bg-red-500/50 cursor-pointer"
+          >
+            Logout
+          </button>
           </form>
         </div>
       </div>
