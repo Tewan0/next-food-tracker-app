@@ -3,12 +3,17 @@
 import { useState, ChangeEvent } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { supabase } from '../lib/supabaseClient';
 
 const AddFood = () => {
+  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   const [formData, setFormData] = useState({
     foodName: '',
-    mealType: 'breakfast',
-    date: '',
+    mealType: 'Breakfast', // ตั้งค่าเริ่มต้นให้สอดคล้องกับ UI
+    date: new Date().toISOString().split('T')[0], // ตั้งค่าวันที่ปัจจุบันเป็นค่าเริ่มต้น
     foodImage: null as File | null,
   });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -32,15 +37,71 @@ const AddFood = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('New food entry submitted:', formData);
-    alert('Food entry saved! Check the console for data.');
+    setIsSubmitting(true);
+    setFeedback(null);
+
+    try {
+      // 1. Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('You must be logged in to add a food entry.');
+      }
+
+      let imageUrl: string | null = null;
+
+      // 2. Upload image if it exists
+      if (formData.foodImage) {
+        const file = formData.foodImage;
+        const filePath = `${user.id}/${Date.now()}_${file.name}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('food_images')
+          .upload(filePath, file);
+
+        if (uploadError) {
+          throw new Error(`Image upload failed: ${uploadError.message}`);
+        }
+
+        const { data: urlData } = supabase.storage.from('food_images').getPublicUrl(filePath);
+        imageUrl = urlData.publicUrl;
+      }
+
+      // 3. Insert data into the 'food_entries' table
+      const { error: insertError } = await supabase.from('food_entries').insert({
+        user_id: user.id,
+        name: formData.foodName,
+        meal_type: formData.mealType,
+        eaten_at: formData.date,
+        image_url: imageUrl,
+      });
+
+      if (insertError) {
+        throw new Error(`Failed to save food entry: ${insertError.message}`);
+      }
+
+      setFeedback({ type: 'success', message: 'Food entry saved successfully!' });
+      
+      // Redirect to dashboard after a short delay
+      setTimeout(() => {
+        router.push('/dashboard');
+        router.refresh(); // Tell Next.js to refresh the data on the dashboard page
+      }, 2000);
+
+    } catch (err) {
+      if (err instanceof Error) {
+        setFeedback({ type: 'error', message: err.message });
+      } else {
+        setFeedback({ type: 'error', message: 'An unexpected error occurred.' });
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="relative min-h-screen bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 p-4 sm:p-8">
-      {/* Back button */}
       <div className="absolute left-4 top-4 sm:left-8 sm:top-8">
         <Link
           href="/dashboard"
@@ -53,8 +114,14 @@ const AddFood = () => {
       <div className="flex min-h-screen flex-col items-center justify-center p-4">
         <div className="w-full max-w-lg rounded-xl bg-white/20 p-6 text-white shadow-xl backdrop-blur-md md:p-10">
           <h2 className="mb-6 text-center text-3xl font-bold md:text-4xl">Add a New Food Entry</h2>
+
+          {feedback && (
+            <div className={`mb-4 rounded-lg p-4 text-center text-white ${feedback.type === 'success' ? 'bg-green-500/30' : 'bg-red-500/30'}`}>
+              {feedback.message}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Food Name */}
             <div>
               <label htmlFor="foodName" className="mb-2 block font-semibold">
                 Food Name
@@ -67,11 +134,10 @@ const AddFood = () => {
                 onChange={handleInputChange}
                 required
                 className="w-full rounded-lg border border-white/50 bg-white/30 p-3 text-white placeholder-white/80 outline-none transition duration-200 focus:border-white"
-                placeholder="Ex. Pad Thai"
+                placeholder="e.g., Pad Thai"
               />
             </div>
 
-            {/* Meal Type */}
             <div>
               <label htmlFor="mealType" className="mb-2 block font-semibold">
                 Meal Type
@@ -83,14 +149,13 @@ const AddFood = () => {
                 onChange={handleInputChange}
                 className="w-full rounded-lg border border-white/50 bg-white/30 p-3 text-white outline-none transition duration-200 focus:border-white"
               >
-                <option value="breakfast" className="bg-purple-500">Breakfast</option>
-                <option value="lunch" className="bg-purple-500">Lunch</option>
-                <option value="dinner" className="bg-purple-500">Dinner</option>
-                <option value="snack" className="bg-purple-500">Snack</option>
+                <option value="Breakfast" className="bg-purple-500">Breakfast</option>
+                <option value="Lunch" className="bg-purple-500">Lunch</option>
+                <option value="Dinner" className="bg-purple-500">Dinner</option>
+                <option value="Snack" className="bg-purple-500">Snack</option>
               </select>
             </div>
 
-            {/* Date */}
             <div>
               <label htmlFor="date" className="mb-2 block font-semibold">
                 Date
@@ -106,7 +171,6 @@ const AddFood = () => {
               />
             </div>
 
-            {/* Food Image */}
             <div className="flex flex-col items-center">
               <label className="mb-2 block font-semibold">Food Image</label>
               {imagePreview && (
@@ -136,12 +200,12 @@ const AddFood = () => {
               />
             </div>
 
-            {/* Save Button */}
             <button
               type="submit"
-              className="w-full rounded-full bg-white py-3 font-bold text-purple-600 shadow-lg transition duration-300 hover:bg-gray-100 hover:shadow-xl cursor-pointer"
+              className="w-full rounded-full bg-white py-3 font-bold text-purple-600 shadow-lg transition duration-300 hover:bg-gray-100 hover:shadow-xl disabled:cursor-not-allowed disabled:bg-gray-400"
+              disabled={isSubmitting}
             >
-              Save Food
+              {isSubmitting ? 'Saving...' : 'Save Food'}
             </button>
           </form>
         </div>

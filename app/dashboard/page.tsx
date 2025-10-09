@@ -1,130 +1,104 @@
-"use client";
+'use client';
 
-import { useState, useMemo } from "react";
-import Link from "next/link";
-import Image, { StaticImageData } from "next/image";
-import { User } from "lucide-react";
+import { useState, useMemo, useEffect } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { supabase } from '../lib/supabaseClient';
+import { User } from 'lucide-react';
 
-import kapraoChicken from "/app/images/kapraoChicken.jpg";
-import salmonSteak from "/app/images/salmonSteak.jpg";
-import khaoniaoMuPing from "/app/images/khaoniaoMuPing.jpg";
-import somtamThai from "/app/images/somtamThai.jpg";
-import kuaitiaoRuea from "/app/images/kuaitiaoRuea.jpg";
-import pizza from "/app/images/pizza.jpg";
-import khaomankai from "/app/images/khaomankai.jpg";
-import kaengKhiaowanKai from "/app/images/kaengKhiaowanKai.jpg";
-import chokMu from "/app/images/chokMu.jpg";
-import phatThaiKungSot from "/app/images/phatThaiKungSot.jpg";
-
-// Mock Data for demonstration
-const MOCK_FOOD_ENTRIES = [
-  {
-    id: 1,
-    date: "2025-09-01",
-    image: kapraoChicken,
-    name: "ผัดกะเพราไก่",
-    meal: "มื้อกลางวัน",
-  },
-  {
-    id: 2,
-    date: "2025-09-01",
-    image: salmonSteak,
-    name: "สเต็กปลาแซลมอน",
-    meal: "มื้อเย็น",
-  },
-  {
-    id: 3,
-    date: "2025-09-02",
-    image: khaoniaoMuPing,
-    name: "ข้าวเหนียวหมูปิ้ง",
-    meal: "มื้อเช้า",
-  },
-  {
-    id: 4,
-    date: "2025-09-02",
-    image: somtamThai,
-    name: "ส้มตำไทย",
-    meal: "มื้อกลางวัน",
-  },
-  {
-    id: 5,
-    date: "2025-09-03",
-    image: kuaitiaoRuea,
-    name: "ก๋วยเตี๋ยวเรือ",
-    meal: "มื้อกลางวัน",
-  },
-  { id: 6, date: "2025-09-03", image: pizza, name: "พิซซ่า", meal: "มื้อเย็น" },
-  {
-    id: 7,
-    date: "2025-09-04",
-    image: khaomankai,
-    name: "ข้าวมันไก่",
-    meal: "มื้อกลางวัน",
-  },
-  {
-    id: 8,
-    date: "2025-09-04",
-    image: kaengKhiaowanKai,
-    name: "แกงเขียวหวานไก่",
-    meal: "มื้อเย็น",
-  },
-  {
-    id: 9,
-    date: "2025-09-05",
-    image: chokMu,
-    name: "โจ๊กหมู",
-    meal: "มื้อเช้า",
-  },
-  {
-    id: 10,
-    date: "2025-09-05",
-    image: phatThaiKungSot,
-    name: "ผัดไทยกุ้งสด",
-    meal: "มื้อกลางวัน",
-  },
-];
+// สร้าง Type (ชนิดข้อมูล) สำหรับ Food Entry เพื่อให้โค้ดรัดกุมขึ้น
+export type FoodEntry = {
+  id: number;
+  name: string;
+  meal_type: string;
+  eaten_at: string;
+  image_url: string | null;
+};
 
 const ITEMS_PER_PAGE = 5;
 
 const Dashboard = () => {
+  const router = useRouter();
+  const [foodEntries, setFoodEntries] = useState<FoodEntry[]>([]);
+  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedImage, setSelectedImage] = useState<StaticImageData | null>(
-    null
-  );
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
-  // Filter food entries
+  useEffect(() => {
+    const fetchFoodEntries = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.push('/login');
+        return;
+      }
+
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('food_entries')
+        .select('*')
+        .order('eaten_at', { ascending: false }); // เรียงจากวันที่ล่าสุดก่อน
+
+      if (error) {
+        console.error('Error fetching food entries:', error.message);
+        alert('Could not fetch food data.');
+      } else {
+        setFoodEntries(data as FoodEntry[]);
+      }
+      setLoading(false);
+    };
+
+    fetchFoodEntries();
+  }, [router]);
+
+  const handleDelete = async (entryId: number, imageUrl: string | null) => {
+    if (!confirm('Are you sure you want to delete this entry?')) {
+      return;
+    }
+
+    // 1. Delete the database record
+    const { error: dbError } = await supabase.from('food_entries').delete().eq('id', entryId);
+
+    if (dbError) {
+      alert(`Failed to delete entry: ${dbError.message}`);
+      return;
+    }
+
+    // 2. If database deletion is successful, delete the associated image from storage
+    if (imageUrl) {
+      try {
+        const imagePath = new URL(imageUrl).pathname.split('/food_images/')[1];
+        if (imagePath) {
+          await supabase.storage.from('food_images').remove([imagePath]);
+        }
+      } catch (e) {
+        console.error("Could not delete image from storage:", e);
+      }
+    }
+    
+    // Refresh the list after deletion
+    setFoodEntries(foodEntries.filter(entry => entry.id !== entryId));
+    alert('Entry deleted successfully!');
+  };
+
   const filteredEntries = useMemo(() => {
-    return MOCK_FOOD_ENTRIES.filter((entry) =>
+    return foodEntries.filter((entry) =>
       entry.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [searchTerm]);
+  }, [searchTerm, foodEntries]);
 
-  // Pagination
   const totalPages = Math.ceil(filteredEntries.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const currentEntries = filteredEntries.slice(
-    startIndex,
-    startIndex + ITEMS_PER_PAGE
-  );
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setCurrentPage(1);
-  };
+  const currentEntries = filteredEntries.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 p-4 sm:p-8">
       <div className="container mx-auto">
-        {/* Header */}
         <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
           <h1 className="text-3xl font-bold text-white">Food Dashboard</h1>
           <div className="flex w-full items-center justify-between gap-4 md:w-auto">
-            {/* Search Bar */}
-            <form
-              onSubmit={handleSearch}
-              className="flex flex-grow items-center"
-            >
+            <form onSubmit={(e) => e.preventDefault()} className="flex flex-grow items-center">
               <input
                 type="text"
                 value={searchTerm}
@@ -139,25 +113,24 @@ const Dashboard = () => {
                 Search
               </button>
             </form>
-            {/* Add Food Button */}
-            <Link
-              href="/addfood"
-              className="rounded-full bg-white px-6 py-2 text-purple-600 shadow-md transition duration-300 hover:bg-gray-100"
-            >
-              + Add Food
-            </Link>
-            {/* Profile Button/Icon */}
-            <Link
-              href="/profile"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-purple-600 shadow-md transition duration-300 hover:bg-gray-100"
-              title="Edit Profile"
-            >
-              <User size={24} />
-            </Link>
+            <div className="flex items-center gap-4">
+              <Link
+                href="/addfood"
+                className="rounded-full bg-white px-6 py-2 text-purple-600 shadow-md transition duration-300 hover:bg-gray-100"
+              >
+                + Add Food
+              </Link>
+              <Link
+                href="/profile"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-purple-600 shadow-md transition duration-300 hover:bg-gray-100"
+                title="Edit Profile"
+              >
+                <User size={24} />
+              </Link>
+            </div>
           </div>
         </div>
 
-        {/* Food Tracker Table */}
         <div className="mt-8 overflow-x-auto rounded-lg bg-white/30 p-4 shadow-xl backdrop-blur-md">
           <table className="min-w-full table-auto text-left text-white">
             <thead>
@@ -170,30 +143,31 @@ const Dashboard = () => {
               </tr>
             </thead>
             <tbody>
-              {currentEntries.length > 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan={5} className="py-8 text-center text-lg">Loading your food entries...</td>
+                </tr>
+              ) : currentEntries.length > 0 ? (
                 currentEntries.map((entry) => (
-                  <tr
-                    key={entry.id}
-                    className="border-b border-white/20 hover:bg-white/10"
-                  >
-                    <td className="px-4 py-3">{entry.date}</td>
+                  <tr key={entry.id} className="border-b border-white/20 hover:bg-white/10">
+                    <td className="px-4 py-3">{entry.eaten_at}</td>
                     <td className="px-4 py-3">
                       <Image
-                        src={entry.image}
+                        src={entry.image_url || '/images/foodTracker.jpg'} // Show default image if none
                         alt={entry.name}
                         width={50}
                         height={50}
                         className="h-12 w-12 rounded-full object-cover cursor-pointer"
-                        onClick={() => setSelectedImage(entry.image)}
+                        onClick={() => setSelectedImage(entry.image_url)}
                       />
                     </td>
                     <td className="px-4 py-3">{entry.name}</td>
-                    <td className="px-4 py-3">{entry.meal}</td>
+                    <td className="px-4 py-3">{entry.meal_type}</td>
                     <td className="flex items-center gap-2 px-4 py-3">
-                      <button className="rounded-full bg-yellow-500 px-3 py-1 text-white transition hover:bg-yellow-600">
+                      <Link href={`/updatefood/${entry.id}`} className="rounded-full bg-yellow-500 px-3 py-1 text-white transition hover:bg-yellow-600">
                         Edit
-                      </button>
-                      <button className="rounded-full bg-red-500 px-3 py-1 text-white transition hover:bg-red-600">
+                      </Link>
+                      <button onClick={() => handleDelete(entry.id, entry.image_url)} className="rounded-full bg-red-500 px-3 py-1 text-white transition hover:bg-red-600">
                         Delete
                       </button>
                     </td>
@@ -202,7 +176,7 @@ const Dashboard = () => {
               ) : (
                 <tr>
                   <td colSpan={5} className="py-8 text-center text-lg">
-                    No food entries found.
+                    No food entries found. Click Add Food to get started!
                   </td>
                 </tr>
               )}
@@ -210,7 +184,6 @@ const Dashboard = () => {
           </table>
         </div>
 
-        {/* Pagination Controls */}
         {filteredEntries.length > ITEMS_PER_PAGE && (
           <div className="mt-8 flex justify-center space-x-2">
             {[...Array(totalPages)].map((_, index) => (
@@ -219,8 +192,8 @@ const Dashboard = () => {
                 onClick={() => setCurrentPage(index + 1)}
                 className={`rounded-full px-4 py-2 font-bold transition duration-300 ${
                   currentPage === index + 1
-                    ? "bg-white text-purple-600"
-                    : "bg-white/30 text-white hover:bg-white/50"
+                    ? 'bg-white text-purple-600'
+                    : 'bg-white/30 text-white hover:bg-white/50'
                 }`}
               >
                 {index + 1}
@@ -230,7 +203,6 @@ const Dashboard = () => {
         )}
       </div>
 
-      {/* Modal for Enlarged Image */}
       {selectedImage && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
