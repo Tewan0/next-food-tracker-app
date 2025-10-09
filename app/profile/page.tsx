@@ -85,67 +85,65 @@ const Profile = () => {
     setFeedback(null);
     setLoading(true);
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      setFeedback({
-        type: "error",
-        message: "You must be logged in to update your profile.",
-      });
+      setFeedback({ type: 'error', message: 'You must be logged in to update your profile.' });
       setLoading(false);
       return;
     }
 
     let updatedAvatarUrl = formData.avatarUrl;
+    const oldAvatarPath = formData.avatarUrl ? formData.avatarUrl.split('/avatars/')[1] : null;
 
     // 1. Upload new image if selected
     if (newProfileImage) {
       const file = newProfileImage;
       const filePath = `profiles/${user.id}/${Date.now()}_${file.name}`;
-
+      
       const { error: uploadError } = await supabase.storage
-        .from("avatars")
+        .from('avatars')
         .upload(filePath, file);
 
       if (uploadError) {
-        setFeedback({
-          type: "error",
-          message: `Failed to upload image: ${uploadError.message}`,
-        });
+        setFeedback({ type: 'error', message: `Failed to upload image: ${uploadError.message}` });
         setLoading(false);
         return;
       }
 
-      const { data: urlData } = supabase.storage
-        .from("avatars")
-        .getPublicUrl(filePath);
+      const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(filePath);
       updatedAvatarUrl = urlData.publicUrl;
     }
 
     // 2. Update profile data in 'profiles' table
-    const { error: profileError } = await supabase.from("profiles").upsert({
-      id: user.id,
-      full_name: formData.fullName,
-      gender: formData.gender,
-      avatar_url: updatedAvatarUrl,
-      updated_at: new Date().toISOString(),
-    });
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({
+        full_name: formData.fullName,
+        gender: formData.gender,
+        avatar_url: updatedAvatarUrl,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', user.id);
 
     if (profileError) {
-      setFeedback({
-        type: "error",
-        message: `Failed to update profile: ${profileError.message}`,
-      });
+      setFeedback({ type: 'error', message: `Failed to update profile: ${profileError.message}` });
     } else {
-      setFeedback({
-        type: "success",
-        message: "Profile updated successfully!",
-      });
-      // Update form data to reflect the new avatar URL
-      setFormData((prev) => ({ ...prev, avatarUrl: updatedAvatarUrl }));
+      // 3. If update is successful and a new image was uploaded, delete the old one
+      if (newProfileImage && oldAvatarPath) {
+        const { error: removeError } = await supabase.storage
+          .from('avatars')
+          .remove([oldAvatarPath]);
+        
+        if (removeError) {
+          // If removing fails, it's not critical, so we just log it.
+          console.error('Failed to delete old avatar:', removeError.message);
+        }
+      }
+      
+      setFeedback({ type: 'success', message: 'Profile updated successfully!' });
+      setFormData(prev => ({ ...prev, avatarUrl: updatedAvatarUrl }));
     }
-
+    
     setLoading(false);
   };
 

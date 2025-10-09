@@ -94,7 +94,7 @@ const Register = () => {
       // Optionally, redirect after a delay
       setTimeout(() => {
         router.push("/login");
-      }, 5000);
+      }, 500);
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
