@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   const next = searchParams.get('next') ?? '/dashboard';
 
   if (code) {
-    const supabase = createClient(); // << เรียกใช้งาน Client ที่สร้างขึ้นใหม่
+    const supabase = await createClient(); // << เรียกใช้งาน Client ที่สร้างขึ้นใหม่
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
       return NextResponse.redirect(`${origin}${next}`);
