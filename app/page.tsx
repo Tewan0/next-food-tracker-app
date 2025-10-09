@@ -13,7 +13,7 @@ const Home = () => {
         </h1>
         <p className="mb-8 text-xl md:text-2xl">Track your meal 😋</p>
 
-        {/* Display Image */}
+        {/* Display Image */ }
         <div className="mb-8">
           <Image
             src={foodTracker}
