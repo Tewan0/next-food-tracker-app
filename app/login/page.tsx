@@ -1,15 +1,16 @@
-'use client'; // Client Component เนื่องจากมีการใช้ State, Link และ Input Events
+"use client"; // Client Component เนื่องจากมีการใช้ State, Link และ Input Events
 
-import Link from 'next/link';
-import { useState, ChangeEvent } from 'react';
-import { useRouter } from 'next/navigation';
-import { supabase } from '../lib/supabaseClient';
+import Link from "next/link";
+import { useState, ChangeEvent } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "../lib/supabaseClient";
+import { FcGoogle } from "react-icons/fc";
 
 const Login = () => {
   const router = useRouter();
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
+    email: "",
+    password: "",
   });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -37,8 +38,14 @@ const Login = () => {
     if (error) {
       setError(error.message);
     } else {
-      router.push('/dashboard');
+      router.push("/dashboard");
     }
+  };
+
+  const handleLoginWithGoogle = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+    });
   };
 
   return (
@@ -89,7 +96,9 @@ const Login = () => {
               />
             </div>
 
-            {error && <p className="text-center text-sm text-red-400">{error}</p>}
+            {error && (
+              <p className="text-center text-sm text-red-400">{error}</p>
+            )}
 
             {/* Login Button */}
             <button
@@ -97,13 +106,28 @@ const Login = () => {
               className="w-full rounded-full bg-white py-3 font-bold text-purple-600 shadow-lg transition duration-300 hover:bg-gray-100 hover:shadow-xl cursor-pointer"
               disabled={loading}
             >
-              {loading ? 'Logging in...' : 'Login'}
+              {loading ? "Logging in..." : "Login"}
             </button>
           </form>
 
+          <div className="relative flex items-center py-2">
+            <div className="flex-grow border-t border-white/50"></div>
+            <span className="mx-4 flex-shrink text-sm text-white/80">OR</span>
+            <div className="flex-grow border-t border-white/50"></div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleLoginWithGoogle}
+            className="flex w-full items-center justify-center gap-3 rounded-full bg-white py-3 font-bold text-gray-700 shadow-lg transition duration-300 hover:bg-gray-100 hover:shadow-xl cursor-pointer"
+          >
+            <FcGoogle size={24} />
+            <span>Continue with Google</span>
+          </button>
+
           {/* Register Link */}
           <p className="mt-6 text-center text-sm">
-            Don{"'"}t have an account?{' '}
+            Don{"'"}t have an account?{" "}
             <Link
               href="/register"
               className="font-semibold text-white underline hover:text-gray-200"
