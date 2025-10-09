@@ -167,7 +167,7 @@ const Dashboard = () => {
                       <Link href={`/updatefood/${entry.id}`} className="rounded-full bg-yellow-500 px-3 py-1 text-white transition hover:bg-yellow-600">
                         Edit
                       </Link>
-                      <button onClick={() => handleDelete(entry.id, entry.image_url)} className="rounded-full bg-red-500 px-3 py-1 text-white transition hover:bg-red-600">
+                      <button onClick={() => handleDelete(entry.id, entry.image_url)} className="rounded-full bg-red-500 px-3 py-1 text-white transition hover:bg-red-600 cursor-pointer">
                         Delete
                       </button>
                     </td>

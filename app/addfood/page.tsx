@@ -87,7 +87,7 @@ const AddFood = () => {
       setTimeout(() => {
         router.push('/dashboard');
         router.refresh(); // Tell Next.js to refresh the data on the dashboard page
-      }, 2000);
+      }, 1000);
 
     } catch (err) {
       if (err instanceof Error) {
@@ -134,7 +134,7 @@ const AddFood = () => {
                 onChange={handleInputChange}
                 required
                 className="w-full rounded-lg border border-white/50 bg-white/30 p-3 text-white placeholder-white/80 outline-none transition duration-200 focus:border-white"
-                placeholder="e.g., Pad Thai"
+                placeholder="Ex. Pad Thai"
               />
             </div>
 
@@ -149,10 +149,10 @@ const AddFood = () => {
                 onChange={handleInputChange}
                 className="w-full rounded-lg border border-white/50 bg-white/30 p-3 text-white outline-none transition duration-200 focus:border-white"
               >
-                <option value="Breakfast" className="bg-purple-500">Breakfast</option>
-                <option value="Lunch" className="bg-purple-500">Lunch</option>
-                <option value="Dinner" className="bg-purple-500">Dinner</option>
-                <option value="Snack" className="bg-purple-500">Snack</option>
+                <option value="Breakfast" className="bg-purple-500">Breakfast (อาหารเช้า)</option>
+                <option value="Lunch" className="bg-purple-500">Lunch (อาหารกลางวัน)</option>
+                <option value="Dinner" className="bg-purple-500">Dinner (อาหารเย็น)</option>
+                <option value="Snack" className="bg-purple-500">Snack (ของว่าง)</option>
               </select>
             </div>
 
@@ -202,7 +202,7 @@ const AddFood = () => {
 
             <button
               type="submit"
-              className="w-full rounded-full bg-white py-3 font-bold text-purple-600 shadow-lg transition duration-300 hover:bg-gray-100 hover:shadow-xl disabled:cursor-not-allowed disabled:bg-gray-400"
+              className="w-full rounded-full bg-white py-3 font-bold text-purple-600 shadow-lg transition duration-300 hover:bg-gray-100 hover:shadow-xl disabled:cursor-not-allowed disabled:bg-gray-400 cursor-pointer"
               disabled={isSubmitting}
             >
               {isSubmitting ? 'Saving...' : 'Save Food'}

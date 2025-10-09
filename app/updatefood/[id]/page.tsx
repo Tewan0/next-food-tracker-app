@@ -119,7 +119,7 @@ const EditFood = ({ params }: { params: { id: string } }) => {
       setTimeout(() => {
         router.push('/dashboard');
         router.refresh();
-      }, 2000);
+      }, 1000);
 
     } catch (err) {
       if (err instanceof Error) {
@@ -164,10 +164,10 @@ const EditFood = ({ params }: { params: { id: string } }) => {
             <div>
               <label htmlFor="mealType" className="mb-2 block font-semibold">Meal Type</label>
               <select id="mealType" name="mealType" value={formData.mealType} onChange={handleInputChange} className="w-full rounded-lg border border-white/50 bg-white/30 p-3 text-white">
-                <option value="Breakfast" className="bg-purple-500">Breakfast</option>
-                <option value="Lunch" className="bg-purple-500">Lunch</option>
-                <option value="Dinner" className="bg-purple-500">Dinner</option>
-                <option value="Snack" className="bg-purple-500">Snack</option>
+                <option value="Breakfast" className="bg-purple-500">Breakfast (อาหารเช้า)</option>
+                <option value="Lunch" className="bg-purple-500">Lunch (อาหารกลางวัน)</option>
+                <option value="Dinner" className="bg-purple-500">Dinner (อาหารเย็น)</option>
+                <option value="Snack" className="bg-purple-500">Snack (ของว่าง)</option>
               </select>
             </div>
             <div>
@@ -186,7 +186,7 @@ const EditFood = ({ params }: { params: { id: string } }) => {
               </label>
               <input type="file" id="foodImage" name="foodImage" onChange={handleImageChange} accept="image/*" className="hidden" />
             </div>
-            <button type="submit" className="w-full rounded-full bg-white py-3 font-bold text-purple-600 shadow-lg transition duration-300 hover:bg-gray-100 disabled:cursor-not-allowed disabled:bg-gray-400" disabled={isSaving}>
+            <button type="submit" className="w-full rounded-full bg-white py-3 font-bold text-purple-600 shadow-lg transition duration-300 hover:bg-gray-100 disabled:cursor-not-allowed disabled:bg-gray-400 cursor-pointer" disabled={isSaving}>
               {isSaving ? 'Saving Changes...' : 'Save Changes'}
             </button>
           </form>
