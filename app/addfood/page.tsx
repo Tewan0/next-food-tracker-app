@@ -67,7 +67,7 @@ const AddFood = () => {
                 onChange={handleInputChange}
                 required
                 className="w-full rounded-lg border border-white/50 bg-white/30 p-3 text-white placeholder-white/80 outline-none transition duration-200 focus:border-white"
-                placeholder="e.g., Pad Thai"
+                placeholder="Ex. Pad Thai"
               />
             </div>
 
@@ -139,7 +139,7 @@ const AddFood = () => {
             {/* Save Button */}
             <button
               type="submit"
-              className="w-full rounded-full bg-white py-3 font-bold text-purple-600 shadow-lg transition duration-300 hover:bg-gray-100 hover:shadow-xl"
+              className="w-full rounded-full bg-white py-3 font-bold text-purple-600 shadow-lg transition duration-300 hover:bg-gray-100 hover:shadow-xl cursor-pointer"
             >
               Save Food
             </button>
