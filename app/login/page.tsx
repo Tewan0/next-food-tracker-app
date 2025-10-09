@@ -6,9 +6,9 @@ import { useRouter } from 'next/navigation';
 import { FcGoogle } from "react-icons/fc";
 import { createClient } from "../lib/supabase/client";
 
-const supabase = createClient();
 
 const Login = () => {
+  const supabase = createClient();
   const router = useRouter();
   const [formData, setFormData] = useState({
     email: '',

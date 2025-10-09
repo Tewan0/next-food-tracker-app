@@ -6,10 +6,10 @@ import Image from 'next/image';
 import { useRouter, useParams } from 'next/navigation';
 import { createClient } from '@/app/lib/supabase/client';
 
-const supabase = createClient();
 
 // รับ props ที่ Next.js ส่งมาให้ ซึ่งจะมี params ที่ข้างในมี id อยู่
 const EditFood = () => { // ลบ params ออกจากตรงนี้
+  const supabase = createClient();
   const router = useRouter();
   const params = useParams(); // เรียกใช้ useParams hook
   const foodId = params.id as string; // ดึง id ออกมา

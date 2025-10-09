@@ -6,8 +6,8 @@ import { useState, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "../lib/supabase/client";
 
-const supabase = createClient();
 const Register = () => {
+  const supabase = createClient();
   const router = useRouter();
   const [formData, setFormData] = useState({
     fullName: "",

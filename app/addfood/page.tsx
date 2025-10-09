@@ -6,9 +6,9 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { createClient } from "../lib/supabase/client";
 
-const supabase = createClient();
 
 const AddFood = () => {
+  const supabase = createClient();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error', message: string } | null>(null);

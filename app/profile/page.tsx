@@ -6,9 +6,8 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { createClient } from "../lib/supabase/client";
 
-const supabase = createClient();
-
 const Profile = () => {
+  const supabase = createClient();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
