@@ -64,7 +64,7 @@ const Register = () => {
     setSuccessMessage(null);
 
     try {
-      // Step 1: Sign up the user WITHOUT the avatar_url first.
+      // Step 1: Sign up the user WITHOUT the avatar_url first
       // The trigger will create a profile row, but avatar_url will be null.
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
