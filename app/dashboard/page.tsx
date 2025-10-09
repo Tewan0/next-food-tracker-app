@@ -1,40 +1,97 @@
-'use client';
+"use client";
 
-import { useState, useMemo } from 'react';
-import Link from 'next/link';
-import Image, { StaticImageData } from 'next/image';
+import { useState, useMemo } from "react";
+import Link from "next/link";
+import Image, { StaticImageData } from "next/image";
+import { User } from "lucide-react";
 
-import kapraoChicken from '/app/images/kapraoChicken.jpg';
-import salmonSteak from '/app/images/salmonSteak.jpg';
-import khaoniaoMuPing from '/app/images/khaoniaoMuPing.jpg';
-import somtamThai from '/app/images/somtamThai.jpg';
-import kuaitiaoRuea from '/app/images/kuaitiaoRuea.jpg';
-import pizza from '/app/images/pizza.jpg';
-import khaomankai from '/app/images/khaomankai.jpg';
-import kaengKhiaowanKai from '/app/images/kaengKhiaowanKai.jpg';
-import chokMu from '/app/images/chokMu.jpg';
-import phatThaiKungSot from '/app/images/phatThaiKungSot.jpg';
+import kapraoChicken from "/app/images/kapraoChicken.jpg";
+import salmonSteak from "/app/images/salmonSteak.jpg";
+import khaoniaoMuPing from "/app/images/khaoniaoMuPing.jpg";
+import somtamThai from "/app/images/somtamThai.jpg";
+import kuaitiaoRuea from "/app/images/kuaitiaoRuea.jpg";
+import pizza from "/app/images/pizza.jpg";
+import khaomankai from "/app/images/khaomankai.jpg";
+import kaengKhiaowanKai from "/app/images/kaengKhiaowanKai.jpg";
+import chokMu from "/app/images/chokMu.jpg";
+import phatThaiKungSot from "/app/images/phatThaiKungSot.jpg";
 
 // Mock Data for demonstration
 const MOCK_FOOD_ENTRIES = [
-  { id: 1, date: '2025-09-01', image: kapraoChicken, name: 'ผัดกะเพราไก่', meal: 'มื้อกลางวัน' },
-  { id: 2, date: '2025-09-01', image: salmonSteak, name: 'สเต็กปลาแซลมอน', meal: 'มื้อเย็น' },
-  { id: 3, date: '2025-09-02', image: khaoniaoMuPing, name: 'ข้าวเหนียวหมูปิ้ง', meal: 'มื้อเช้า' },
-  { id: 4, date: '2025-09-02', image: somtamThai, name: 'ส้มตำไทย', meal: 'มื้อกลางวัน' },
-  { id: 5, date: '2025-09-03', image: kuaitiaoRuea, name: 'ก๋วยเตี๋ยวเรือ', meal: 'มื้อกลางวัน' },
-  { id: 6, date: '2025-09-03', image: pizza, name: 'พิซซ่า', meal: 'มื้อเย็น' },
-  { id: 7, date: '2025-09-04', image: khaomankai, name: 'ข้าวมันไก่', meal: 'มื้อกลางวัน' },
-  { id: 8, date: '2025-09-04', image: kaengKhiaowanKai, name: 'แกงเขียวหวานไก่', meal: 'มื้อเย็น' },
-  { id: 9, date: '2025-09-05', image: chokMu, name: 'โจ๊กหมู', meal: 'มื้อเช้า' },
-  { id: 10, date: '2025-09-05', image: phatThaiKungSot, name: 'ผัดไทยกุ้งสด', meal: 'มื้อกลางวัน' },
+  {
+    id: 1,
+    date: "2025-09-01",
+    image: kapraoChicken,
+    name: "ผัดกะเพราไก่",
+    meal: "มื้อกลางวัน",
+  },
+  {
+    id: 2,
+    date: "2025-09-01",
+    image: salmonSteak,
+    name: "สเต็กปลาแซลมอน",
+    meal: "มื้อเย็น",
+  },
+  {
+    id: 3,
+    date: "2025-09-02",
+    image: khaoniaoMuPing,
+    name: "ข้าวเหนียวหมูปิ้ง",
+    meal: "มื้อเช้า",
+  },
+  {
+    id: 4,
+    date: "2025-09-02",
+    image: somtamThai,
+    name: "ส้มตำไทย",
+    meal: "มื้อกลางวัน",
+  },
+  {
+    id: 5,
+    date: "2025-09-03",
+    image: kuaitiaoRuea,
+    name: "ก๋วยเตี๋ยวเรือ",
+    meal: "มื้อกลางวัน",
+  },
+  { id: 6, date: "2025-09-03", image: pizza, name: "พิซซ่า", meal: "มื้อเย็น" },
+  {
+    id: 7,
+    date: "2025-09-04",
+    image: khaomankai,
+    name: "ข้าวมันไก่",
+    meal: "มื้อกลางวัน",
+  },
+  {
+    id: 8,
+    date: "2025-09-04",
+    image: kaengKhiaowanKai,
+    name: "แกงเขียวหวานไก่",
+    meal: "มื้อเย็น",
+  },
+  {
+    id: 9,
+    date: "2025-09-05",
+    image: chokMu,
+    name: "โจ๊กหมู",
+    meal: "มื้อเช้า",
+  },
+  {
+    id: 10,
+    date: "2025-09-05",
+    image: phatThaiKungSot,
+    name: "ผัดไทยกุ้งสด",
+    meal: "มื้อกลางวัน",
+  },
 ];
 
 const ITEMS_PER_PAGE = 5;
 
 const Dashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedImage, setSelectedImage] = useState<StaticImageData | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedImage, setSelectedImage] = useState<StaticImageData | null>(
+    null
+  );
 
   // Filter food entries
   const filteredEntries = useMemo(() => {
@@ -46,7 +103,10 @@ const Dashboard = () => {
   // Pagination
   const totalPages = Math.ceil(filteredEntries.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const currentEntries = filteredEntries.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const currentEntries = filteredEntries.slice(
+    startIndex,
+    startIndex + ITEMS_PER_PAGE
+  );
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,7 +121,10 @@ const Dashboard = () => {
           <h1 className="text-3xl font-bold text-white">Food Dashboard</h1>
           <div className="flex w-full items-center justify-between gap-4 md:w-auto">
             {/* Search Bar */}
-            <form onSubmit={handleSearch} className="flex flex-grow items-center">
+            <form
+              onSubmit={handleSearch}
+              className="flex flex-grow items-center"
+            >
               <input
                 type="text"
                 value={searchTerm}
@@ -83,6 +146,14 @@ const Dashboard = () => {
             >
               + Add Food
             </Link>
+            {/* Profile Button/Icon */}
+            <Link
+              href="/profile"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-purple-600 shadow-md transition duration-300 hover:bg-gray-100"
+              title="Edit Profile"
+            >
+              <User size={24} />
+            </Link>
           </div>
         </div>
 
@@ -101,7 +172,10 @@ const Dashboard = () => {
             <tbody>
               {currentEntries.length > 0 ? (
                 currentEntries.map((entry) => (
-                  <tr key={entry.id} className="border-b border-white/20 hover:bg-white/10">
+                  <tr
+                    key={entry.id}
+                    className="border-b border-white/20 hover:bg-white/10"
+                  >
                     <td className="px-4 py-3">{entry.date}</td>
                     <td className="px-4 py-3">
                       <Image
@@ -145,8 +219,8 @@ const Dashboard = () => {
                 onClick={() => setCurrentPage(index + 1)}
                 className={`rounded-full px-4 py-2 font-bold transition duration-300 ${
                   currentPage === index + 1
-                    ? 'bg-white text-purple-600'
-                    : 'bg-white/30 text-white hover:bg-white/50'
+                    ? "bg-white text-purple-600"
+                    : "bg-white/30 text-white hover:bg-white/50"
                 }`}
               >
                 {index + 1}
