@@ -60,10 +60,13 @@ const Login = () => {
   };
 
   const handleLoginWithGoogle = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-    });
-  };
+  await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${location.origin}/auth/callback`,
+    },
+  });
+};
 
   return (
     <div className="relative min-h-screen bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 p-4 sm:p-8">
