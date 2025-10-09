@@ -36,6 +36,27 @@ const Register = () => {
     }
   };
 
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${location.origin}/auth/callback`,
+        },
+      });
+      if (error) throw error;
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("An unexpected error occurred during Google login.");
+      }
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -170,6 +191,22 @@ const Register = () => {
               {loading ? "Registering..." : "Register"}
             </button>
           </form>
+
+          <div className="my-6 flex items-center">
+            <div className="flex-grow border-t border-white/50"></div>
+            <span className="mx-4 flex-shrink text-sm text-white">OR</span>
+            <div className="flex-grow border-t border-white/50"></div>
+          </div>
+
+          <button
+            onClick={handleGoogleLogin}
+            className="flex w-full cursor-pointer items-center justify-center rounded-full bg-white py-3 font-bold text-gray-700 shadow-lg transition duration-300 hover:bg-gray-100 hover:shadow-xl disabled:cursor-not-allowed disabled:bg-gray-400"
+            disabled={loading}
+          >
+            <Image src="/google.svg" alt="Google" width={24} height={24} className="mr-3" />
+            Sign up with Google
+          </button>
+          
           <p className="mt-6 text-center text-sm">
             Already have an account?{" "}
             <Link href="/login" className="font-semibold text-white underline hover:text-gray-200">
