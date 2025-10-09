@@ -4,7 +4,9 @@ import { useState, ChangeEvent, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useParams } from 'next/navigation';
-import { supabase } from '../../lib/supabaseClient';
+import { createClient } from '@/app/lib/supabase/client';
+
+const supabase = createClient();
 
 // รับ props ที่ Next.js ส่งมาให้ ซึ่งจะมี params ที่ข้างในมี id อยู่
 const EditFood = () => { // ลบ params ออกจากตรงนี้

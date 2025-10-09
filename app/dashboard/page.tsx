@@ -4,8 +4,10 @@ import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { supabase } from "../lib/supabaseClient";
 import { User } from "lucide-react";
+import { createClient } from "../lib/supabase/client";
+
+const supabase = createClient();
 
 // สร้าง Type (ชนิดข้อมูล) สำหรับ Food Entry เพื่อให้โค้ดรัดกุมขึ้น
 export type FoodEntry = {
