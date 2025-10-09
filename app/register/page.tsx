@@ -4,10 +4,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "../lib/supabase/client";
+import { supabase } from '../lib/supabaseClient';
 
 const Register = () => {
-  const supabase = createClient();
   const router = useRouter();
   const [formData, setFormData] = useState({
     fullName: "",

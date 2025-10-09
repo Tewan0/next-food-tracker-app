@@ -4,10 +4,9 @@ import { useState, ChangeEvent, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { createClient } from "../lib/supabase/client";
+import { supabase } from '../lib/supabaseClient';
 
 const Profile = () => {
-  const supabase = createClient();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);

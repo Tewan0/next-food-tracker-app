@@ -3,12 +3,10 @@
 import Link from 'next/link';
 import { useState, ChangeEvent, useEffect } from 'react'; // เพิ่ม useEffect
 import { useRouter } from 'next/navigation';
+import { supabase } from '../lib/supabaseClient';
 import { FcGoogle } from "react-icons/fc";
-import { createClient } from "../lib/supabase/client";
-
 
 const Login = () => {
-  const supabase = createClient();
   const router = useRouter();
   const [formData, setFormData] = useState({
     email: '',
