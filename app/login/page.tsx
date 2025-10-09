@@ -1,13 +1,15 @@
+// In app/login/page.tsx
 'use client';
 
 import Link from 'next/link';
-import { useState, ChangeEvent, useEffect } from 'react'; // เพิ่ม useEffect
+import { useState, ChangeEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '../lib/supabaseClient';
+import { createClient } from '@/app/lib/supabase/client'; // << 1. แก้ไข Import
 import { FcGoogle } from "react-icons/fc";
 
 const Login = () => {
   const router = useRouter();
+  const supabase = createClient(); // << 2. สร้าง Client ตรงนี้
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -15,22 +17,19 @@ const Login = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // ++ เพิ่ม useEffect นี้เข้าไปทั้งหมด ++
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        // เมื่อมีการล็อกอินสำเร็จ (ไม่ว่าจะด้วย Google หรือ Email)
         if (event === 'SIGNED_IN' && session) {
           router.push('/dashboard');
         }
       }
     );
 
-    // Cleanup listener on component unmount
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, [router]);
+  }, [router, supabase]); // เพิ่ม supabase เข้าไปใน dependency array
 
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -56,18 +55,18 @@ const Login = () => {
     if (error) {
       setError(error.message);
     }
-    // ไม่ต้องมี router.push('/dashboard') ที่นี่แล้ว เพราะ useEffect จะจัดการให้
   };
 
   const handleLoginWithGoogle = async () => {
-  await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: `${location.origin}/auth/callback`,
-    },
-  });
-};
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${location.origin}/auth/callback`,
+      },
+    });
+  };
 
+  // ... ส่วนของ JSX ที่เหลือไม่ต้องแก้ไข ...
   return (
     <div className="relative min-h-screen bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 p-4 sm:p-8">
       <Link
@@ -122,7 +121,7 @@ const Login = () => {
             >
               {loading ? 'Logging in...' : 'Login'}
             </button>
-            
+
             <div className="relative flex items-center py-2">
               <div className="flex-grow border-t border-white/50"></div>
               <span className="mx-4 flex-shrink text-sm text-white/80">OR</span>

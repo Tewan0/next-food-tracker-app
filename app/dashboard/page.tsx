@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { supabase } from "../lib/supabaseClient";
+import { createClient } from '@/app/lib/supabase/client';
 import { User } from "lucide-react";
 
 // สร้าง Type (ชนิดข้อมูล) สำหรับ Food Entry เพื่อให้โค้ดรัดกุมขึ้น
@@ -20,6 +20,7 @@ const ITEMS_PER_PAGE = 5;
 
 const Dashboard = () => {
   const router = useRouter();
+  const supabase = createClient();
   const [foodEntries, setFoodEntries] = useState<FoodEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);

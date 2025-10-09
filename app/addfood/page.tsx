@@ -4,10 +4,11 @@ import { useState, ChangeEvent } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { supabase } from '../lib/supabaseClient';
+import { createClient } from '@/app/lib/supabase/client';
 
 const AddFood = () => {
   const router = useRouter();
+  const supabase = createClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   const [formData, setFormData] = useState({
