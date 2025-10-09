@@ -73,6 +73,8 @@ const Profile = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.clear(); // ล้าง console เก่า
+    console.log("--- Starting Profile Update ---");
     setFeedback(null);
     setIsSaving(true);
 
@@ -84,13 +86,13 @@ const Profile = () => {
     }
 
     let updatedAvatarUrl = formData.avatarUrl;
-    const oldAvatarUrl = formData.avatarUrl; // เก็บ URL เก่าไว้ก่อน
+    const oldAvatarUrl = formData.avatarUrl;
+    console.log("Step 1: Old avatar URL to be deleted:", oldAvatarUrl || "None");
 
-    // 1. Upload new image if selected
     if (newProfileImage) {
       const file = newProfileImage;
       const filePath = `profiles/${user.id}/${Date.now()}_${file.name}`;
-      
+
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file);
@@ -100,12 +102,11 @@ const Profile = () => {
         setIsSaving(false);
         return;
       }
-
       const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(filePath);
       updatedAvatarUrl = urlData.publicUrl;
+      console.log("Step 2: New image uploaded. New URL:", updatedAvatarUrl);
     }
 
-    // 2. Update profile data in 'profiles' table
     const { error: profileError } = await supabase
       .from('profiles')
       .update({
@@ -121,37 +122,42 @@ const Profile = () => {
       setIsSaving(false);
       return;
     }
-      
-    // 3. If update is successful and a new image was uploaded, try to delete the old one
+
+    console.log("Step 3: Profile data in DB updated successfully.");
     let finalMessage = 'Profile updated successfully!';
+
     if (newProfileImage && oldAvatarUrl) {
+      console.log("Step 4: Attempting to delete old image.");
       try {
-        // Extract path from the full URL. Example: profiles/..../image.png
         const oldAvatarPath = new URL(oldAvatarUrl).pathname.split('/avatars/')[1];
-        
+        console.log("Step 5: Extracted old image path:", oldAvatarPath);
+
         if (oldAvatarPath) {
           const { error: removeError } = await supabase.storage
             .from('avatars')
             .remove([oldAvatarPath]);
-          
+
           if (removeError) {
-            console.error('Failed to delete old avatar:', removeError.message);
-            // แจ้งเตือนผู้ใช้ว่าลบไฟล์เก่าไม่สำเร็จ แต่โปรไฟล์อัปเดตแล้ว
+            console.error("Step 6 - FAILED: Supabase returned a deletion error:", removeError.message);
             finalMessage += ` (Warning: Could not delete old image: ${removeError.message})`;
+          } else {
+            console.log("Step 6 - SUCCESS: Old image deleted successfully.");
           }
+        } else {
+          console.log("Step 5.1 - SKIPPED: oldAvatarPath could not be extracted.");
         }
       } catch (e) {
-        console.error("Error processing old avatar URL:", e);
+        console.error("Step 5 - FAILED: Error parsing oldAvatarUrl:", e);
         finalMessage += " (Warning: Could not process old image URL to delete it.)";
       }
     }
-    
+
     setFeedback({ type: 'success', message: finalMessage });
     setFormData(prev => ({ ...prev, avatarUrl: updatedAvatarUrl }));
-    setNewProfileImage(null); // เคลียร์ไฟล์ที่เลือกไว้ออก
+    setNewProfileImage(null);
     setIsSaving(false);
   };
-  
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500">
@@ -161,113 +167,52 @@ const Profile = () => {
   }
 
   return (
+    // The rest of your JSX code for the form goes here, no changes needed for the UI
+    // Just copy-paste the return statement from your existing file
     <div className="relative min-h-screen bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 p-4 sm:p-8">
-      {/* Back button */}
       <div className="absolute left-4 top-4 sm:left-8 sm:top-8">
-        <Link
-          href="/dashboard"
-          className="rounded-full bg-white px-4 py-2 text-purple-600 shadow-md transition duration-300 hover:bg-gray-100"
-        >
+        <Link href="/dashboard" className="rounded-full bg-white px-4 py-2 text-purple-600 shadow-md transition duration-300 hover:bg-gray-100">
           &larr; Back to Dashboard
         </Link>
       </div>
-
       <div className="flex min-h-screen flex-col items-center justify-center p-4">
         <div className="w-full max-w-lg rounded-xl bg-white/20 p-6 text-white shadow-xl backdrop-blur-md md:p-10">
           <h2 className="mb-6 text-center text-3xl font-bold md:text-4xl">Edit Profile</h2>
-
           {feedback && (
             <div className={`mb-4 rounded-lg p-4 text-center text-white ${feedback.type === 'success' ? 'bg-green-500/30' : 'bg-red-500/30'}`}>
               {feedback.message}
             </div>
           )}
-          
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Profile Image */}
             <div className="flex flex-col items-center">
               <label className="mb-2 block font-semibold">Profile Image</label>
               {imagePreview && (
                 <div className="mb-4">
-                  <Image
-                    src={imagePreview}
-                    alt="Profile Preview"
-                    width={100}
-                    height={100}
-                    className="h-24 w-24 rounded-full border-2 border-white object-cover"
-                  />
+                  <Image src={imagePreview} alt="Profile Preview" width={100} height={100} className="h-24 w-24 rounded-full border-2 border-white object-cover" />
                 </div>
               )}
-              <label
-                htmlFor="profileImage"
-                className="cursor-pointer rounded-full bg-white px-6 py-3 font-semibold text-purple-600 shadow-md transition duration-300 hover:bg-gray-100"
-              >
+              <label htmlFor="profileImage" className="cursor-pointer rounded-full bg-white px-6 py-3 font-semibold text-purple-600 shadow-md transition duration-300 hover:bg-gray-100">
                 Change Photo
               </label>
-              <input
-                type="file"
-                id="profileImage"
-                name="profileImage"
-                onChange={handleImageChange}
-                accept="image/*"
-                className="hidden"
-              />
+              <input type="file" id="profileImage" name="profileImage" onChange={handleImageChange} accept="image/*" className="hidden" />
             </div>
-            
-            {/* Full Name */}
             <div>
-              <label htmlFor="fullName" className="mb-2 block font-semibold">
-                Full Name
-              </label>
-              <input
-                type="text"
-                id="fullName"
-                name="fullName"
-                value={formData.fullName}
-                onChange={handleInputChange}
-                required
-                className="w-full rounded-lg border border-white/50 bg-white/30 p-3 text-white placeholder-white/80 outline-none transition duration-200 focus:border-white"
-              />
+              <label htmlFor="fullName" className="mb-2 block font-semibold">Full Name</label>
+              <input type="text" id="fullName" name="fullName" value={formData.fullName} onChange={handleInputChange} required className="w-full rounded-lg border border-white/50 bg-white/30 p-3 text-white placeholder-white/80 outline-none transition duration-200 focus:border-white" />
             </div>
-
-            {/* Email */}
             <div>
-              <label htmlFor="email" className="mb-2 block font-semibold">
-                Email
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                disabled
-                className="w-full rounded-lg border border-white/50 bg-white/50 p-3 text-white/80 cursor-not-allowed"
-              />
+              <label htmlFor="email" className="mb-2 block font-semibold">Email</label>
+              <input type="email" id="email" name="email" value={formData.email} disabled className="w-full rounded-lg border border-white/50 bg-white/50 p-3 text-white/80 cursor-not-allowed" />
             </div>
-
-            {/* Gender */}
             <div>
-              <label htmlFor="gender" className="mb-2 block font-semibold">
-                Gender
-              </label>
-              <select
-                id="gender"
-                name="gender"
-                value={formData.gender}
-                onChange={handleInputChange}
-                className="w-full rounded-lg border border-white/50 bg-white/30 p-3 text-white"
-              >
+              <label htmlFor="gender" className="mb-2 block font-semibold">Gender</label>
+              <select id="gender" name="gender" value={formData.gender} onChange={handleInputChange} className="w-full rounded-lg border border-white/50 bg-white/30 p-3 text-white">
                 <option value="male" className="bg-purple-500">Male</option>
                 <option value="female" className="bg-purple-500">Female</option>
                 <option value="other" className="bg-purple-500">Other</option>
               </select>
             </div>
-
-            {/* Save Button */}
-            <button
-              type="submit"
-              className="w-full rounded-full bg-white py-3 font-bold text-purple-600 shadow-lg transition duration-300 hover:bg-gray-100 disabled:cursor-not-allowed disabled:bg-gray-400"
-              disabled={isSaving}
-            >
+            <button type="submit" className="w-full rounded-full bg-white py-3 font-bold text-purple-600 shadow-lg transition duration-300 hover:bg-gray-100 disabled:cursor-not-allowed disabled:bg-gray-400" disabled={isSaving}>
               {isSaving ? 'Saving...' : 'Save Changes'}
             </button>
           </form>
