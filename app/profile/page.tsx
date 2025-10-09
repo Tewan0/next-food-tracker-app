@@ -1,60 +1,53 @@
-"use client"; // Client Component เนื่องจากมีการใช้ State, useEffect และ Events
+'use client';
 
-import { useState, ChangeEvent, useEffect } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { supabase } from "../lib/supabaseClient"; // Import supabase client
+import { useState, ChangeEvent, useEffect } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { supabase } from '../lib/supabaseClient';
 
 const Profile = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    gender: "male",
-    avatarUrl: "",
+    fullName: '',
+    email: '',
+    gender: 'male',
+    avatarUrl: '',
   });
   const [newProfileImage, setNewProfileImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState<{
-    type: "success" | "error";
-    message: string;
-  } | null>(null);
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
       setLoading(true);
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
-        router.push("/login");
+        router.push('/login');
         return;
       }
 
       const user = session.user;
       const { data: profile, error } = await supabase
-        .from("profiles")
-        .select("full_name, gender, avatar_url")
-        .eq("id", user.id)
+        .from('profiles')
+        .select('full_name, gender, avatar_url')
+        .eq('id', user.id)
         .single();
 
       if (error) {
-        console.error("Error fetching profile:", error.message);
-        setFeedback({
-          type: "error",
-          message: "Could not fetch profile data.",
-        });
+        console.error('Error fetching profile:', error.message);
+        setFeedback({ type: 'error', message: 'Could not fetch profile data.' });
       } else if (profile) {
         setFormData({
-          fullName: profile.full_name || "",
-          email: user.email || "",
-          gender: profile.gender || "male",
-          avatarUrl: profile.avatar_url || "",
+          fullName: profile.full_name || '',
+          email: user.email || '',
+          gender: profile.gender || 'male',
+          avatarUrl: profile.avatar_url || '',
         });
-        setImagePreview(profile.avatar_url || "/images/mock-profile.png"); // Default image if none
+        setImagePreview(profile.avatar_url || '/images/mock-profile.png');
       }
       setLoading(false);
     };
@@ -62,9 +55,7 @@ const Profile = () => {
     fetchProfile();
   }, [router]);
 
-  const handleInputChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -83,17 +74,17 @@ const Profile = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFeedback(null);
-    setLoading(true);
+    setIsSaving(true);
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       setFeedback({ type: 'error', message: 'You must be logged in to update your profile.' });
-      setLoading(false);
+      setIsSaving(false);
       return;
     }
 
     let updatedAvatarUrl = formData.avatarUrl;
-    const oldAvatarPath = formData.avatarUrl ? formData.avatarUrl.split('/avatars/')[1] : null;
+    const oldAvatarUrl = formData.avatarUrl; // เก็บ URL เก่าไว้ก่อน
 
     // 1. Upload new image if selected
     if (newProfileImage) {
@@ -106,7 +97,7 @@ const Profile = () => {
 
       if (uploadError) {
         setFeedback({ type: 'error', message: `Failed to upload image: ${uploadError.message}` });
-        setLoading(false);
+        setIsSaving(false);
         return;
       }
 
@@ -127,37 +118,47 @@ const Profile = () => {
 
     if (profileError) {
       setFeedback({ type: 'error', message: `Failed to update profile: ${profileError.message}` });
-    } else {
-      // 3. If update is successful and a new image was uploaded, delete the old one
-      if (newProfileImage && oldAvatarPath) {
-        const { error: removeError } = await supabase.storage
-          .from('avatars')
-          .remove([oldAvatarPath]);
-        
-        if (removeError) {
-          // If removing fails, it's not critical, so we just log it.
-          console.error('Failed to delete old avatar:', removeError.message);
-        }
-      }
+      setIsSaving(false);
+      return;
+    }
       
-      setFeedback({ type: 'success', message: 'Profile updated successfully!' });
-      setFormData(prev => ({ ...prev, avatarUrl: updatedAvatarUrl }));
+    // 3. If update is successful and a new image was uploaded, try to delete the old one
+    let finalMessage = 'Profile updated successfully!';
+    if (newProfileImage && oldAvatarUrl) {
+      try {
+        // Extract path from the full URL. Example: profiles/..../image.png
+        const oldAvatarPath = new URL(oldAvatarUrl).pathname.split('/avatars/')[1];
+        
+        if (oldAvatarPath) {
+          const { error: removeError } = await supabase.storage
+            .from('avatars')
+            .remove([oldAvatarPath]);
+          
+          if (removeError) {
+            console.error('Failed to delete old avatar:', removeError.message);
+            // แจ้งเตือนผู้ใช้ว่าลบไฟล์เก่าไม่สำเร็จ แต่โปรไฟล์อัปเดตแล้ว
+            finalMessage += ` (Warning: Could not delete old image: ${removeError.message})`;
+          }
+        }
+      } catch (e) {
+        console.error("Error processing old avatar URL:", e);
+        finalMessage += " (Warning: Could not process old image URL to delete it.)";
+      }
     }
     
-    setLoading(false);
+    setFeedback({ type: 'success', message: finalMessage });
+    setFormData(prev => ({ ...prev, avatarUrl: updatedAvatarUrl }));
+    setNewProfileImage(null); // เคลียร์ไฟล์ที่เลือกไว้ออก
+    setIsSaving(false);
   };
-
-  if (loading && !feedback) {
+  
+  if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500">
         <p className="text-white text-xl">Loading profile...</p>
       </div>
     );
   }
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/login");
-  };
 
   return (
     <div className="relative min-h-screen bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 p-4 sm:p-8">
@@ -173,23 +174,14 @@ const Profile = () => {
 
       <div className="flex min-h-screen flex-col items-center justify-center p-4">
         <div className="w-full max-w-lg rounded-xl bg-white/20 p-6 text-white shadow-xl backdrop-blur-md md:p-10">
-          <h2 className="mb-6 text-center text-3xl font-bold md:text-4xl">
-            Edit Profile
-          </h2>
+          <h2 className="mb-6 text-center text-3xl font-bold md:text-4xl">Edit Profile</h2>
 
-          {/* Feedback Messages */}
           {feedback && (
-            <div
-              className={`mb-4 rounded-lg p-4 text-center text-white ${
-                feedback.type === "success"
-                  ? "bg-green-500/30"
-                  : "bg-red-500/30"
-              }`}
-            >
+            <div className={`mb-4 rounded-lg p-4 text-center text-white ${feedback.type === 'success' ? 'bg-green-500/30' : 'bg-red-500/30'}`}>
               {feedback.message}
             </div>
           )}
-
+          
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Profile Image */}
             <div className="flex flex-col items-center">
@@ -220,7 +212,7 @@ const Profile = () => {
                 className="hidden"
               />
             </div>
-
+            
             {/* Full Name */}
             <div>
               <label htmlFor="fullName" className="mb-2 block font-semibold">
@@ -234,7 +226,6 @@ const Profile = () => {
                 onChange={handleInputChange}
                 required
                 className="w-full rounded-lg border border-white/50 bg-white/30 p-3 text-white placeholder-white/80 outline-none transition duration-200 focus:border-white"
-                placeholder="John Doe"
               />
             </div>
 
@@ -248,8 +239,8 @@ const Profile = () => {
                 id="email"
                 name="email"
                 value={formData.email}
-                disabled // Email is usually not changed here
-                className="w-full rounded-lg border border-white/50 bg-white/50 p-3 text-white/80 placeholder-white/80 outline-none transition duration-200 focus:border-white cursor-not-allowed"
+                disabled
+                className="w-full rounded-lg border border-white/50 bg-white/50 p-3 text-white/80 cursor-not-allowed"
               />
             </div>
 
@@ -263,34 +254,21 @@ const Profile = () => {
                 name="gender"
                 value={formData.gender}
                 onChange={handleInputChange}
-                className="w-full rounded-lg border border-white/50 bg-white/30 p-3 text-white placeholder-white/80 outline-none transition duration-200 focus:border-white"
+                className="w-full rounded-lg border border-white/50 bg-white/30 p-3 text-white"
               >
-                <option value="male" className="bg-purple-500">
-                  Male
-                </option>
-                <option value="female" className="bg-purple-500">
-                  Female
-                </option>
-                <option value="other" className="bg-purple-500">
-                  Other
-                </option>
+                <option value="male" className="bg-purple-500">Male</option>
+                <option value="female" className="bg-purple-500">Female</option>
+                <option value="other" className="bg-purple-500">Other</option>
               </select>
             </div>
 
             {/* Save Button */}
             <button
               type="submit"
-              className="cursor-pointer w-full rounded-full bg-white py-3 font-bold text-purple-600 shadow-lg transition duration-300 hover:bg-gray-100 hover:shadow-xl disabled:cursor-not-allowed disabled:bg-gray-400"
-              disabled={loading}
+              className="w-full rounded-full bg-white py-3 font-bold text-purple-600 shadow-lg transition duration-300 hover:bg-gray-100 disabled:cursor-not-allowed disabled:bg-gray-400"
+              disabled={isSaving}
             >
-              {loading ? "Saving..." : "Save Changes"}
-            </button>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="cursor-pointer mt-4 w-full rounded-full bg-red-500 py-3 font-bold text-white shadow-lg transition duration-300 hover:bg-red-600"
-            >
-              Logout
+              {isSaving ? 'Saving...' : 'Save Changes'}
             </button>
           </form>
         </div>
