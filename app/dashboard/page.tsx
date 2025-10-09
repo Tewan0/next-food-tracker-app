@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useState, useMemo, useEffect } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { supabase } from '../lib/supabaseClient';
-import { User } from 'lucide-react';
+import { useState, useMemo, useEffect } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { supabase } from "../lib/supabaseClient";
+import { User } from "lucide-react";
 
 // สร้าง Type (ชนิดข้อมูล) สำหรับ Food Entry เพื่อให้โค้ดรัดกุมขึ้น
 export type FoodEntry = {
@@ -23,26 +23,35 @@ const Dashboard = () => {
   const [foodEntries, setFoodEntries] = useState<FoodEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
+  const mealTypeTranslations: { [key: string]: string } = {
+    Breakfast: "อาหารเช้า",
+    Lunch: "อาหารกลางวัน",
+    Dinner: "อาหารเย็น",
+    Snack: "ของว่าง",
+  };
 
   useEffect(() => {
     const fetchFoodEntries = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session) {
-        router.push('/login');
+        router.push("/login");
         return;
       }
 
       setLoading(true);
       const { data, error } = await supabase
-        .from('food_entries')
-        .select('*')
-        .order('eaten_at', { ascending: false }); // เรียงจากวันที่ล่าสุดก่อน
+        .from("food_entries")
+        .select("*")
+        .order("eaten_at", { ascending: false }); // เรียงจากวันที่ล่าสุดก่อน
 
       if (error) {
-        console.error('Error fetching food entries:', error.message);
-        alert('Could not fetch food data.');
+        console.error("Error fetching food entries:", error.message);
+        alert("Could not fetch food data.");
       } else {
         setFoodEntries(data as FoodEntry[]);
       }
@@ -53,12 +62,15 @@ const Dashboard = () => {
   }, [router]);
 
   const handleDelete = async (entryId: number, imageUrl: string | null) => {
-    if (!confirm('Are you sure you want to delete this entry?')) {
+    if (!confirm("Are you sure you want to delete this entry?")) {
       return;
     }
 
     // 1. Delete the database record
-    const { error: dbError } = await supabase.from('food_entries').delete().eq('id', entryId);
+    const { error: dbError } = await supabase
+      .from("food_entries")
+      .delete()
+      .eq("id", entryId);
 
     if (dbError) {
       alert(`Failed to delete entry: ${dbError.message}`);
@@ -68,18 +80,18 @@ const Dashboard = () => {
     // 2. If database deletion is successful, delete the associated image from storage
     if (imageUrl) {
       try {
-        const imagePath = new URL(imageUrl).pathname.split('/food_images/')[1];
+        const imagePath = new URL(imageUrl).pathname.split("/food_images/")[1];
         if (imagePath) {
-          await supabase.storage.from('food_images').remove([imagePath]);
+          await supabase.storage.from("food_images").remove([imagePath]);
         }
       } catch (e) {
         console.error("Could not delete image from storage:", e);
       }
     }
-    
+
     // Refresh the list after deletion
-    setFoodEntries(foodEntries.filter(entry => entry.id !== entryId));
-    alert('Entry deleted successfully!');
+    setFoodEntries(foodEntries.filter((entry) => entry.id !== entryId));
+    alert("Entry deleted successfully!");
   };
 
   const filteredEntries = useMemo(() => {
@@ -90,7 +102,10 @@ const Dashboard = () => {
 
   const totalPages = Math.ceil(filteredEntries.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const currentEntries = filteredEntries.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const currentEntries = filteredEntries.slice(
+    startIndex,
+    startIndex + ITEMS_PER_PAGE
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 p-4 sm:p-8">
@@ -98,7 +113,10 @@ const Dashboard = () => {
         <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
           <h1 className="text-3xl font-bold text-white">Food Dashboard</h1>
           <div className="flex w-full items-center justify-between gap-4 md:w-auto">
-            <form onSubmit={(e) => e.preventDefault()} className="flex flex-grow items-center">
+            <form
+              onSubmit={(e) => e.preventDefault()}
+              className="flex flex-grow items-center"
+            >
               <input
                 type="text"
                 value={searchTerm}
@@ -145,15 +163,20 @@ const Dashboard = () => {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="py-8 text-center text-lg">Loading your food entries...</td>
+                  <td colSpan={5} className="py-8 text-center text-lg">
+                    Loading your food entries...
+                  </td>
                 </tr>
               ) : currentEntries.length > 0 ? (
                 currentEntries.map((entry) => (
-                  <tr key={entry.id} className="border-b border-white/20 hover:bg-white/10">
+                  <tr
+                    key={entry.id}
+                    className="border-b border-white/20 hover:bg-white/10"
+                  >
                     <td className="px-4 py-3">{entry.eaten_at}</td>
                     <td className="px-4 py-3">
                       <Image
-                        src={entry.image_url || '/images/foodTracker.jpg'} // Show default image if none
+                        src={entry.image_url || "/images/foodTracker.jpg"} // Show default image if none
                         alt={entry.name}
                         width={50}
                         height={50}
@@ -162,12 +185,22 @@ const Dashboard = () => {
                       />
                     </td>
                     <td className="px-4 py-3">{entry.name}</td>
-                    <td className="px-4 py-3">{entry.meal_type}</td>
+                    <td className="px-4 py-3">
+                      {entry.meal_type}
+                      {mealTypeTranslations[entry.meal_type] &&
+                        ` (${mealTypeTranslations[entry.meal_type]})`}
+                    </td>
                     <td className="flex items-center gap-2 px-4 py-3">
-                      <Link href={`/updatefood/${entry.id}`} className="rounded-full bg-yellow-500 px-3 py-1 text-white transition hover:bg-yellow-600">
+                      <Link
+                        href={`/updatefood/${entry.id}`}
+                        className="rounded-full bg-yellow-500 px-3 py-1 text-white transition hover:bg-yellow-600"
+                      >
                         Edit
                       </Link>
-                      <button onClick={() => handleDelete(entry.id, entry.image_url)} className="rounded-full bg-red-500 px-3 py-1 text-white transition hover:bg-red-600 cursor-pointer">
+                      <button
+                        onClick={() => handleDelete(entry.id, entry.image_url)}
+                        className="rounded-full bg-red-500 px-3 py-1 text-white transition hover:bg-red-600 cursor-pointer"
+                      >
                         Delete
                       </button>
                     </td>
@@ -192,8 +225,8 @@ const Dashboard = () => {
                 onClick={() => setCurrentPage(index + 1)}
                 className={`rounded-full px-4 py-2 font-bold transition duration-300 ${
                   currentPage === index + 1
-                    ? 'bg-white text-purple-600'
-                    : 'bg-white/30 text-white hover:bg-white/50'
+                    ? "bg-white text-purple-600"
+                    : "bg-white/30 text-white hover:bg-white/50"
                 }`}
               >
                 {index + 1}
