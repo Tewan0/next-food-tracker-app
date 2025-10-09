@@ -155,7 +155,14 @@ const Profile = () => {
     setFeedback({ type: 'success', message: finalMessage });
     setFormData(prev => ({ ...prev, avatarUrl: updatedAvatarUrl }));
     setNewProfileImage(null);
-    setIsSaving(false);
+    // No need to set isSaving to false here if we are redirecting
+    // setIsSaving(false);
+
+    // Redirect to dashboard after a short delay to show the success message
+    setTimeout(() => {
+      setIsSaving(false);
+      router.push('/dashboard');
+    }, 1000); // 1.5 seconds delay
   };
 
   if (loading) {

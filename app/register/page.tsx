@@ -101,8 +101,8 @@ const Register = () => {
         throw new Error(`User and image uploaded, but failed to link image to profile: ${updateError.message}`);
       }
 
-      setSuccessMessage("Registration successful! Please check your email to confirm your account.");
-      setTimeout(() => router.push("/login"), 5000);
+      setSuccessMessage("Registration successful!");
+      setTimeout(() => router.push("/login"), 1500);
 
     } catch (err) {
       if (err instanceof Error) {
