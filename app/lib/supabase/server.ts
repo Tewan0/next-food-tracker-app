@@ -2,7 +2,7 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
-export const createClient = () => { // ลบ async และ await ออก
+export const createClient = () => { // ไม่ต้องใช้ async/await
   const cookieStore = cookies()
 
   return createServerClient(
@@ -16,12 +16,18 @@ export const createClient = () => { // ลบ async และ await ออก
         set(name: string, value: string, options: CookieOptions) {
           try {
             cookieStore.set({ name, value, ...options })
-          } catch (error) {}
+          } catch (error) {
+            // The `set` method was called from a Server Component.
+            // This can be ignored if you have middleware refreshing user sessions.
+          }
         },
         remove(name: string, options: CookieOptions) {
           try {
             cookieStore.delete({ name, ...options })
-          } catch (error) {}
+          } catch (error) {
+            // The `delete` method was called from a Server Component.
+            // This can be ignored if you have middleware refreshing user sessions.
+          }
         },
       },
     }
