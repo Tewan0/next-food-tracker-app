@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import foodTracker from '/app/images/foodTracker.jpg';
+import foodTracker from '@/foodTracker.jpg';
 
 const Home = () => {
   return (
