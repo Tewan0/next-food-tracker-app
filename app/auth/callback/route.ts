@@ -1,6 +1,4 @@
-// In app/auth/callback/route.ts
-
-import { createClient } from '@/app/lib/supabase/server'; // << แก้ไขเป็นตัวนี้
+import { createClient } from '@/app/lib/supabase/server';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 

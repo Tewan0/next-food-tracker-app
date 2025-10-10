@@ -85,7 +85,7 @@ const Register = () => {
       // If signup is successful but there's no image to upload, we're done.
       if (!formData.profileImage) {
         setSuccessMessage("Registration successful!");
-        setTimeout(() => router.push("/login"), 1500);
+        setTimeout(() => router.push("/dashboard"), 1000); // Redirect to dashboard
         return;
       }
 
@@ -124,7 +124,7 @@ const Register = () => {
       }
 
       setSuccessMessage("Registration successful!");
-      setTimeout(() => router.push("/login"), 1500);
+      setTimeout(() => router.push("/dashboard"), 1500); // Redirect to dashboard
 
     } catch (err) {
       if (err instanceof Error) {
