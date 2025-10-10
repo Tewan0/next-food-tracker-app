@@ -121,7 +121,7 @@ const EditFood = () => { // ลบ params ออกจากตรงนี้
       setTimeout(() => {
         router.push('/dashboard');
         router.refresh();
-      }, 1000);
+      }, 500);
 
     } catch (err) {
       if (err instanceof Error) {
