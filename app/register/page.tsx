@@ -37,27 +37,6 @@ const Register = () => {
     }
   };
 
-  const handleGoogleLogin = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${location.origin}/auth/callback`,
-        },
-      });
-      if (error) throw error;
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("An unexpected error occurred during Google login.");
-      }
-      setLoading(false);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -65,8 +44,6 @@ const Register = () => {
     setSuccessMessage(null);
 
     try {
-      // Step 1: Sign up the user WITHOUT the avatar_url first
-      // The trigger will create a profile row, but avatar_url will be null.
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -82,20 +59,17 @@ const Register = () => {
         throw signUpError;
       }
 
-      // If signup is successful but there's no image to upload, we're done.
       if (!formData.profileImage) {
         setSuccessMessage("Registration successful!");
-        setTimeout(() => router.push("/dashboard"), 1000); // Redirect to dashboard
+        setTimeout(() => router.push("/dashboard"), 1500);
         return;
       }
 
-      // Step 2: If there is an image, get the new user's ID.
       const user = signUpData.user;
       if (!user) {
         throw new Error("User was not created, cannot upload image.");
       }
 
-      // Step 3: Upload the image to the correct user-specific folder.
       const file = formData.profileImage;
       const filePath = `profiles/${user.id}/${Date.now()}_${file.name}`;
       const { error: uploadError } = await supabase.storage
@@ -103,17 +77,14 @@ const Register = () => {
         .upload(filePath, file);
 
       if (uploadError) {
-        // If upload fails, the user is already created. We can inform them.
         throw new Error(`User created, but image upload failed: ${uploadError.message}`);
       }
 
-      // Step 4: Get the public URL of the uploaded image.
       const { data: urlData } = supabase.storage
         .from("avatars")
         .getPublicUrl(filePath);
       const avatarUrl = urlData.publicUrl;
 
-      // Step 5: Update the user's profile with the avatar_url.
       const { error: updateError } = await supabase
         .from("profiles")
         .update({ avatar_url: avatarUrl })
@@ -124,7 +95,7 @@ const Register = () => {
       }
 
       setSuccessMessage("Registration successful!");
-      setTimeout(() => router.push("/dashboard"), 1500); // Redirect to dashboard
+      setTimeout(() => router.push("/dashboard"), 1500);
 
     } catch (err) {
       if (err instanceof Error) {
@@ -192,21 +163,6 @@ const Register = () => {
               {loading ? "Registering..." : "Register"}
             </button>
           </form>
-
-          <div className="my-6 flex items-center">
-            <div className="flex-grow border-t border-white/50"></div>
-            <span className="mx-4 flex-shrink text-sm text-white">OR</span>
-            <div className="flex-grow border-t border-white/50"></div>
-          </div>
-
-          <button
-            onClick={handleGoogleLogin}
-            className="flex w-full cursor-pointer items-center justify-center rounded-full bg-white py-3 font-bold text-gray-700 shadow-lg transition duration-300 hover:bg-gray-100 hover:shadow-xl disabled:cursor-not-allowed disabled:bg-gray-400"
-            disabled={loading}
-          >
-            <Image src="/google.svg" alt="Google" width={24} height={24} className="mr-3" />
-            Sign up with Google
-          </button>
           
           <p className="mt-6 text-center text-sm">
             Already have an account?{" "}

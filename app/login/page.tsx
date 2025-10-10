@@ -4,12 +4,11 @@
 import Link from 'next/link';
 import { useState, ChangeEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/app/lib/supabase/client'; // << 1. แก้ไข Import
-import { FcGoogle } from "react-icons/fc";
+import { createClient } from '@/app/lib/supabase/client';
 
 const Login = () => {
   const router = useRouter();
-  const supabase = createClient(); // << 2. สร้าง Client ตรงนี้
+  const supabase = createClient();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -29,7 +28,7 @@ const Login = () => {
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, [router, supabase]); // เพิ่ม supabase เข้าไปใน dependency array
+  }, [router, supabase]);
 
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -57,16 +56,6 @@ const Login = () => {
     }
   };
 
-  const handleLoginWithGoogle = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${location.origin}/auth/callback`,
-      },
-    });
-  };
-
-  // ... ส่วนของ JSX ที่เหลือไม่ต้องแก้ไข ...
   return (
     <div className="relative min-h-screen bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 p-4 sm:p-8">
       <Link
@@ -120,21 +109,6 @@ const Login = () => {
               disabled={loading}
             >
               {loading ? 'Logging in...' : 'Login'}
-            </button>
-
-            <div className="relative flex items-center py-2">
-              <div className="flex-grow border-t border-white/50"></div>
-              <span className="mx-4 flex-shrink text-sm text-white/80">OR</span>
-              <div className="flex-grow border-t border-white/50"></div>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleLoginWithGoogle}
-              className="flex w-full items-center justify-center gap-3 rounded-full bg-white py-3 font-bold text-gray-700 shadow-lg transition duration-300 hover:bg-gray-100 hover:shadow-xl cursor-pointer"
-            >
-              <FcGoogle size={24} />
-              <span>Continue with Google</span>
             </button>
           </form>
 
