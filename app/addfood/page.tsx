@@ -88,7 +88,7 @@ const AddFood = () => {
       setTimeout(() => {
         router.push('/dashboard');
         router.refresh(); // Tell Next.js to refresh the data on the dashboard page
-      }, 1000);
+      }, 500);
 
     } catch (err) {
       if (err instanceof Error) {
